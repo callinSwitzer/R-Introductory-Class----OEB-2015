@@ -1,0 +1,722 @@
+---
+title: "Session 3"
+author: "Callin Switzer"
+date: "September 29, 2015"
+output: html_document
+---
+
+Topics:
+
+1. Manipulate your data (sub setting with logical statements, cleaning data, making calculations with a data frame) 
+2. Export data 
+3. Formatting data and visualization using ggplot()
+4. ** Loops and apply functions()
+5. ** Writing your own functions
+
+**if time
+
+
+```{r, echo = FALSE}
+# print system time, so we know when the last update was
+paste("Last knit to html at: ", Sys.time())
+```
+
+---
+
+# Review
+#### What we learned last time:
+1. Set and get working directory
+2. Import different file types into R
+3. Navigate your data frames, using square-bracket and "$" notation.
+4. Quickly visualize your data with the plot(), hist(), and rug() functions and/or car::scatterplotMatrix()
+
+---
+
+```{r}
+# sets your working directory
+setwd("~/Dropbox/Harvard/RByCall/RClassMaterials/Session3")
+
+# read in pollen dataset
+flr <- read.csv("datasets/CallinPollen.csv")
+```
+
+---
+
+<span style="color:red; font-family:Georgia; font-size:2em;">
+Exercises(0): 
+</span>
+
+### 0.1 Set your working directory
+
+### 0.2 Import the "CallinPollen.csv" dataset, and call it "flr".
+
+---
+
+
+## New Material
+
+---
+
+## 1. Manipulate your data (sub setting with logical statements, cleaning data, making calculations with a data frame)
+#### List of logical operators
+* "==" equals
+* "!=" not equal
+* "&" and
+* "|" or
+* ">" greather
+* "<" less
+* ">=" greather or equal
+* "<=" less or equal
+* "%in%" is in  
+
+```{r}
+# select rows, all columns
+FewRows <- flr[10:20, ]
+FewRows
+
+# use logical statements to return logical vectors
+amb <- flr$trt == "Ambient" # returns a logical vector that is TRUE when flr$trt is ambient
+head(amb)
+summary(amb)
+
+# Use "&" to refine further
+ambHighHum <- flr$trt == "Ambient" & flr$humidity > 50
+summary(ambHighHum)
+
+# Note: can't use x == NA; us is.na() instead
+head(flr$openTime == NA) # doesn't work
+naOpen <- is.na(flr$openTime)
+naOpen
+```
+
+---
+
+<span style="color:red; font-family:Georgia; font-size:2em;">
+Exercises(1): 
+</span>
+
+### 1.1 Make a new logical vector, called "seven" that is TRUE if flr$distance is equal to 7.  Use summary(seven) to check to make sure you have 12 TRUE. 
+
+
+```{r}
+seven <- flr$distance == 7
+summary(seven)
+
+```
+
+### 1.2 Make a new logical vector, called "NotAmbHot", where "flr $ temp > 24.5" and flr $ trt is not "Ambient". Use summary(NotAmbHot) to make sure you have 150 TRUE.
+
+```{r}
+NotAmbHot <- flr$temp > 24.5 & flr$trt != "Ambient"
+summary(NotAmbHot)
+
+```
+
+
+---
+
+
+
+#### We can use logical statements to subset dataframes and clean data
+Use square bracket notation
+
+```{r}
+# select rows where daysOpen == 1, all columns
+DO1 <- flr$daysOpen == 1
+d1 <- flr[DO1, ]
+summary(d1)
+
+# we can do it all in one step
+d1 <- flr[flr$daysOpen == 1, ]
+summary(d1)
+
+# select rows where daysOpen does not = 1, and distance == 1
+d1d1 <- flr[flr$daysOpen != 1 & flr$distance == 1, ]
+head(d1d1)
+
+
+# cleaning data
+hist(flr$slope); rug(flr$slope) # look at histogram and rug
+
+# say we want to drop the points where slope > 0.12
+sub1 <- flr[flr$slope < 0.12, ]
+hist(sub1$slope); rug(sub1$slope) # check our work
+
+```
+
+#### Calculations within data frames
+And tabulating some data from the data frames
+
+```{r}
+# say we want to calculate a new measurement that is a combination of slope + int
+flr$NewStat <- flr$slope + flr$int
+head(flr$NewStat)
+
+# or this will work
+flr$NewStat1 <- with(flr, slope * int)
+head(flr$NewStat1)
+
+# say we want to change one of the variable types in our data frame
+class(flr$daysOpen)
+flr$daysOpen <- as.factor(flr$daysOpen)
+class(flr$daysOpen)
+
+# or this will work
+class(flr$flowerNum)
+flr <- within(flr, flowerNum <- as.factor(flowerNum))
+class(flr$flowerNum)
+
+
+# calculate averages by individual
+# say we want average glycogen for each individual
+URL <- "http://nature.berkeley.edu/~casterln/crawley/rats.txt"
+rats <- read.csv(URL, sep = "\t")
+
+summary(rats)
+head(rats)
+tapply(X = rats$Glycogen, FUN = mean, INDEX = rats$Rat)
+
+# calcuate mean by treatment and individual
+tapply(X = rats$Glycogen, FUN = mean, INDEX = interaction(rats$Rat, rats$Treatment))
+
+
+tab1 <- tapply(X = flr$slope, INDEX = flr$trt, FUN = mean)
+class(tab1)
+mode(tab1)
+
+# tabulate your data (get counts)
+xt1 <- xtabs(formula = ~trt, data = flr)
+xt1
+
+# quickly plot the table
+barplot(xt1)
+
+# convert to data frame for easy saving
+tab1 <- as.data.frame(tab1)
+```
+
+---
+
+<span style="color:red; font-family:Georgia; font-size:2em;">
+Exercises(1, cont'): 
+</span>
+
+### 1.3 Read in the "loblolly.txt" data. Call it "lob".  Make sure header = TRUE, if you use the read.table() function
+```{r}
+file.show("datasets/loblolly.txt")
+lob <- read.table("datasets/loblolly.txt", header = TRUE, sep = " ")
+summary(lob)
+
+lob <- read.csv("datasets/loblolly.txt", sep = " ",  header = TRUE)
+summary(lob)
+
+```
+
+### 1.4 Make a new smaller dataframe, called lob.sm, where "Seed" is not "311", and where "height" is greater than 5.  Plot a histogram of "height" to prove that there are none less than 5 (feel free to add a rug). 
+
+* check to see if 311 is in your new dataframe with this command: "311 %in% lob.sm$Seed"
+
+     
+```{r}
+lob.sm <- lob[lob$Seed != 311 & lob$height > 5, ]
+hist(lob.sm$height); rug(lob.sm$height)
+
+311 %in% lob.sm$Seed # not there
+305 %in% lob.sm$Seed # is there
+
+```
+
+
+### 1.5 Read in the "yarn.txt" file; call it yarn. Make two separate histograms -- one for the breaks in wool A and one for the breaks in wool B.  
+     
+*Advanced* plot the histograms side-by-side on one panel, and make sure the x-axis limits are the same for each.  
+
+```{r}
+file.show("datasets/yarn.txt")
+yarn <- read.table("datasets/yarn.txt", sep = "\t", header = TRUE)
+
+par(mfrow = c(1,2))
+limx <- c(0, 80)
+hist(yarn$breaks[yarn$wool == "A"], main = "Wool A", xlim = limx)
+hist(yarn$breaks[yarn$wool == "B"], main = "Wool B", xlim = limx)
+par(mfrow = c(1,1))
+
+## or this
+library(ggplot2)
+ggplot(yarn, aes(x = breaks)) + 
+     geom_histogram() + 
+     facet_wrap( ~ wool) + 
+     theme_bw()
+```
+
+
+### 1.6 *Advanced* Calculate the mean, median, and range for "breaks" for each type of wool in the dataset.
+```{r}
+tapply(yarn$breaks, INDEX = yarn$wool, FUN = function(x) c(mean = mean(x), median = median(x), range = range(x)))
+```
+
+---
+
+## 2. Export data
+```{r}
+# Write text files
+# can also use write.csv()
+tab1
+write.table(x = tab1, file = "Tab1.csv", sep = ",",  col.names = FALSE)
+file.remove("Tab1.csv") # remove the file
+
+# saving plots
+pdf(file = "plot1.pdf", width = 5, height = 4) # open graphics device
+# can also use postscript()
+plot(x = flr$humidity, y=flr$temp) # make your plot
+dev.off() # close the graphics device
+
+# remove the file from my directory
+file.remove("plot1.pdf")
+
+# or just export with the "Export" button 
+```
+
+---
+
+<span style="color:red; font-family:Georgia; font-size:2em;">
+Exercises(2): 
+</span>
+
+### 2.1 Read int the CallinPollen.txt file (if you haven't already), and call it flr. Plot x = humidity, y = int.  Export this plot to a file called "humInt.pdf".  Make the width = 4 and height = 3.
+
+```{r}
+pdf("humInt.pdf", width = 4, height = 3)
+with(flr, plot(x = humidity, y = int))
+dev.off()
+file.remove("humInt.pdf") # remove file
+```
+
+### 2.2 *Advanced* Make that plot look nicer! Change the points to solid dots.  Remove the box around the plot.  Give it a nice title and rename the axes.  Save it with width = 5, height = 4 as "fancyHumInt.pdf". Note: "int"" is a measurement of pollen released from a flower. (hint: type "?plot" to see help)
+
+```{r}
+pdf("fancyHumInt.pdf", width = 5, height = 4)
+with(flr, plot(x = jitter(humidity), y = int, 
+               ylab = "Pollen (Integration Method)",
+               xlab = "Relative Humidity (%)",
+               bty = "l", 
+               main = "Pollen released vs. Humidity", 
+               pch = 20, 
+               col = rgb(.9, .5, .3, .9)
+               ))
+dev.off()
+file.remove("fancyHumInt.pdf")
+
+```
+
+### 2.3 Subset the flr dataset to contain only rows where "distance" > 9 & the "distance" variable is not an "NA" (hint: use !is.na()). Call the new data frame flr.dist.  Export this small data frame as "flrDist.csv".
+
+```{r}
+flr.dist <- flr[flr$distance > 9 & !is.na(flr$distance), ]
+write.csv(flr.dist, file = "flrDist.csv")
+file.remove("flrDist.csv") # remove
+```
+
+---
+
+## 3 Formatting data and visualization using ggplot()
+
+Review: installing new libraries
+
+use install.packages("..."), but you only ned to use this the first time you use the library.  After that, you can just use library("...")
+
+```{r}
+# install.packages("ggplot2") # do this only the first time you use a library
+library(ggplot2) # now, this package is ready to use
+# help(package = "ggplot2") # gets help for this new package or library
+
+
+# let's try it
+ggplot(flr, aes(x= humidity, y = int)) + 
+     geom_point() 
+```
+
+
+---
+
+<span style="color:red; font-family:Georgia; font-size:2em;">
+Exercises(3): 
+</span>
+
+### 3.1 Load the ggplot2 library (install, if you haven't already).
+
+
+### 3.2  To make sure it works, type the following:
+
+ggplot(flr, aes(x = temp, y = humidity)) +
+     geom_point()
+     
+     
+```{r}
+ggplot(flr, aes(x = temp, y = humidity)) +
+     geom_point()
+```
+
+---
+
+
+
+#### Ways to format data for ggplot
+
+```{r}
+df1 <- data.frame(person = c("bob", "sue", "jack", "ann"), number1 = c(4,5,6,1), number2 = c(2,4,6,6))
+df1
+
+# we want to plot persons' number1 and number2, but we'd need them to be in the same column
+# wrong
+ggplot(df1) + 
+     geom_point(aes(x = person, y = number1), color = "red") + 
+     geom_point(aes(x = person, y = number2), color = "blue")
+
+# you can reformat
+library(reshape2)
+df.melt <- melt(df1, id.vars = "person")
+head(df.melt)
+
+ggplot(df.melt, aes(x = person, y = value)) +
+     geom_point(aes(color = variable))
+
+
+## formatting for barcharts
+ggplot(df1, aes(x = person, y = number1)) + 
+     geom_bar(stat = "identity")
+
+## or reshape the data frame
+df.long <- data.frame(person = unlist(sapply(as.character(df1$person), 
+                                             FUN = function(x) 
+                                                  rep(x, times = df1[df1$person == x, "number1"]))))
+
+head(df.long)
+
+ggplot(df.long, aes(x = person)) + 
+     geom_bar( fill = "red", alpha = 0.6)
+
+```
+
+
+## Making nice plots with ggplot
+
+Example: Functional Ecology
+
+http://www.functionalecology.org/view/0/authorGuideline.html
+
+Figures. Please submit electronic artwork as TIFF files (for half-tones) or non-rasterized EPS files (for vector graphics) if possible. Detailed information on the publisher's digital illustration standards is available at http://authorservices.wiley.com/electronicartworkguidelines.pdf. When uploaded the appropriate file designation should be selected from the options on Manuscript Central.
+
+Please ensure that symbols, labels, etc. are large enough for 50% reduction. Figures should not be boxed and tick marks should be on the inside of the axes. 
+
+
+```{r}
+# example with flower data
+flr1 <- flr[flr$shakeNumber == 1, ]
+
+# let's rename the plants to make things more interesting
+library(plyr)
+
+flr1$plant
+
+flr1$plant <- revalue(flr1$plant, c("big002" = "Solanum dulcamara", "sml001" = "Solanum dulcamarensis"))
+
+plt1 <- ggplot(flr1, aes(y = slope, x = temp)) + 
+     geom_point(aes(shape = plant, col = plant))
+     
+plt1 + theme_bw()
+
+# install.packages("grid")
+library(grid) # need this package for the unit() function
+
+# define custom functional ecology theme for ggplot
+functEcolTheme <-   theme_bw() + 
+                    theme(panel.grid.major = element_blank(), 
+                         panel.grid.minor = element_blank(), 
+                         panel.border = element_blank(), 
+                         panel.background = element_blank(), 
+                         axis.line = element_line(colour = "black"), 
+                         axis.ticks.length = unit(x = -0.25, units = "cm"), 
+                         axis.ticks.margin=unit(0.5, "cm"), 
+                         legend.title = element_blank(), 
+                         text = element_text(family = "Times New Roman", size = 14), 
+                         axis.text = element_text(size = 14), 
+                         legend.text = element_text(size = 14))
+
+plt1 + functEcolTheme 
+
+
+plt2 <- plt1 + 
+     functEcolTheme + 
+     labs(x = expression(paste("Temperature (",degree,"C)")), 
+          y = "Slope of pollen release") + 
+     scale_y_log10() + 
+     theme(legend.text = element_text(face = "italic"), 
+           legend.position = c(.87, .9)) + 
+     geom_smooth(method = "lm", se = FALSE, color = "black", lty = 2, lwd = 1) + 
+     scale_colour_manual(values = c("grey40", "grey70"), name = "Plant species") + 
+     scale_shape_discrete(name = "Plant species") # make sure both color and shape are the same name
+
+plt2
+
+# doesn't work
+# ggsave(filename = "ggplt2.pdf", plot = plt2, width = 8, height = 6)
+
+# make an eps file
+ggsave(filename = "FunctEcol.eps", device = cairo_pdf, plot = plt2, width = 3, height = 2)
+file.remove("FunctEcol.eps") # remove file
+
+
+# make a pdf
+ggsave(filename = "FunctEcol.pdf", device = cairo_pdf, plot = plt2, width = 8, height = 6)
+file.remove("FunctEcol.pdf") # remove file
+
+```
+
+
+### End of class ##
+
+---
+
+<span style="color:red; font-family:Georgia; font-size:2em;">
+Exercises(3, cont'): 
+</span>
+
+### 3.3 Use ggplot to plot a scatterplot (geom_point()) of this: 
+     x = flr$shakeNumber, y = flr$slope
+
+```{r}
+ggplot(flr, aes(x = shakeNumber, y = slope)) + 
+     geom_point()
+
+```
+
+
+### 3.4 Add the functional ecology theme we defined earlier to the plot
+```{r}
+ggplot(flr, aes(x = shakeNumber, y = slope)) + 
+     geom_point() + 
+     functEcolTheme
+```
+
+
+### 3.5 Add this to your previous graph, and see what happens:
+     + geom_smooth()
+     
+```{r, warning=FALSE, messsage = FALSE}
+ggplot(flr, aes(x = shakeNumber, y = slope)) + 
+     geom_point() + 
+     functEcolTheme + 
+     geom_smooth()
+
+```
+
+---
+
+## Making boxplots
+
+```{r}
+plt3 <- ggplot(flr1, aes(x = trt, y = int)) + 
+     geom_boxplot()
+plt3
+
+plt3 + functEcolTheme + 
+     theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# changing order of the boxes -- change levels of a factor
+trtMeans <- tapply(X = flr1$int, FUN = mean, INDEX = flr1$trt)
+trtMeans.sort <- trtMeans[order(trtMeans, decreasing = TRUE)]
+     
+flr1$trt <- factor(flr1$trt, levels = names(trtMeans.sort))
+
+plt3.ordered <- ggplot(flr1, aes(x = trt, y = int)) + 
+     geom_boxplot(fill = 'black', alpha = 0.5) + 
+     functEcolTheme + 
+     theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+           plot.margin = unit(c(2,1,1,1), "cm")) + 
+     labs(x = "Treatment", y = "Pollen release (integration method)")
+
+plt3.ordered 
+plt3.ordered + geom_point()
+plt4 <- plt3.ordered + geom_point(position = position_jitter(width = 0.1, height = 0), alpha = 0.5)
+plt4
+
+ggsave("boxpltTrt.pdf", device = cairo_pdf, plot = plt4, width = 8, height = 6)
+file.remove("boxpltTrt.pdf")
+```
+
+---
+
+<span style="color:red; font-family:Georgia; font-size:2em;">
+Exercises(3, cont'): 
+</span>
+
+
+
+### 3.6 Read in the "loblolly.txt" dataset, if you haven't already.  Call it "lob". Use ggplot() to plot a scatterplot (geom_point()) with x= age, y = height.
+```{r}
+lob <- read.table("datasets/loblolly.txt", sep = " ", header = TRUE)
+head(lob)
+ggplot(lob, aes(x = age, y = height)) + 
+     geom_point()
+
+```
+
+### 3.7 Using the "lob" dataframe, convert "age" to a factor. 
+     
+     lob$age <- as.factor(lob$age)
+
+### Now make a boxplot where x = age, and y = height with ggplot()
+
+```{r}
+lob$age <- as.factor(lob$age)
+
+ggplot(lob, aes(x = age, y = height)) + 
+     geom_boxplot()
+```
+
+### 3.8 Using the "lob" dataframe, add points to the boxplot from 3.7. *Advanced change the color of the points, based on the "Seed" variable from the "lob" dataframe (you may want to convert it to a factor first)*
+
+```{r}
+seed <- as.factor(lob$Seed)
+
+ggplot(lob, aes(x = age, y = height)) + 
+     geom_boxplot() + 
+     geom_point(aes(color = seed))
+```
+
+### 3.9 Add the Functional Ecology theme to your plot
+```{r}
+ggplot(lob, aes(x = age, y = height)) + 
+     geom_boxplot() + 
+     geom_point(aes(color = seed)) + 
+     functEcolTheme
+
+```
+
+
+
+############################### END ############################################
+
+
+
+
+
+
+
+## Loops
+```{r}
+# for loops repeat a specific number of times
+for(i in 1:10){
+     print(i + 100)
+}
+
+for(ii in df1$person){
+    print(rep(ii, times = df1[df1$person == ii, "number1"]))
+}
+
+
+## while loops repeat until something happens
+x <- 1
+while(x < 10){
+     print(x + 100) 
+     x <- x + 1
+}
+
+## Apply functions are often faster than loops
+
+# for loop
+system.time({
+
+     newVec <- numeric()
+     for(ii in 1:50000){
+          newVec[ii] <- ii + 100
+     }
+})
+head(newVec)
+
+
+## sapply function
+system.time({
+     newVec.sa <- sapply(1:100000, FUN = function(x) x + 100)
+})
+
+## you can speed up a for-loop by pre-allocating space
+system.time({
+
+     newVec <- numeric(100000)
+     for(ii in 1:100000){
+          newVec[ii] <- ii + 100
+     }
+})
+
+
+```
+
+
+## Writing your own functions
+```{r}
+# functions take in something, do something, then output something
+
+# example 1
+printNum.plus5 <- function(num){
+     print(num + 5)
+}
+
+
+printNum.plus5(5)
+printNum.plus5(1000)
+
+
+# example 2
+plotWithAxisLabels <- function(x1, y1){
+     plot(x = x1, y = y1, xlab = "Here is x1", ylab = "Here is y1", 
+          bty = "l", pch = 20)
+}
+
+plotWithAxisLabels(x1 = flr$distance, y1 = flr$slope)
+
+
+# example 3 with sapply
+# fake data
+df1 <- data.frame(person = c("bob", "sue", "jack", "ann"), number1 = c(4,5,6,1), number2 = c(2,4,6,6))	
+df1
+
+# want to convert to long format
+longerizer1 <- function(name){
+     rep(name, times = df1[df1$person == name, "number1"])
+}
+
+longerizer1("bob")
+df1
+longerizer1("sue")
+
+# we can use this function in sapply
+system.time({
+    listPerson <- sapply(df1$person, longerizer1)
+     nms <- unlist(listPerson) 
+})
+
+nms
+
+
+
+
+# we could do the same thing with a for loop
+system.time({
+
+     names <- as.character(numeric())
+     for(ii in df1$person){
+          tmp <- rep(ii, length = df1$number1[df1$person == ii])
+          names <- append(names, tmp)
+     }
+     names <- as.factor(names)
+     
+})
+
+
+names
+
+
+```
+

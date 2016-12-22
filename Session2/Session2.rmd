@@ -1,0 +1,541 @@
+---
+title: "Intro OEB R Course, Session 2"
+author: "Callin Switzer"
+date: "September 24, 2015"
+output: html_document
+---
+
+Topics:
+
+1. Set and get working directory
+     * Review: import data into R.
+     * New: read in different data types
+2. Navigate your data frames, using square-bracket and "$" notation.
+3. Quickly visualize your data with the plot(), hist(), and rug() functions and/or car::scatterplotMatrix()
+4. Manipulate your data (sub setting with logical statements, cleaning data, making calculations with a data frame) 
+5. Export data 
+6. Install new libraries 
+7. Use functions from different libraries
+8. ** Formatting data for visualization
+9. ** Loops and apply functions()
+
+**if time
+
+Note: We're skipping string manipulation
+
+```{r, echo = FALSE}
+# print system time, so we know when the last update was
+paste("Last knit to html at: ", Sys.time())
+```
+
+---
+
+# Review
+#### What we learned last time:
+1. "#" is the comment character
+2. <- or = will assign things to variables
+3. R has different data types -- character, logical, numeric, factor
+4. R has different data structures -- arrays, matrices, lists, vectors, data frames
+5. Some handy functions include str(), summary(), length(), nrow(), ncol(), names(), colnames(), class(), mode().
+6. You can import data using the read.csv() function, and if you want the file path, you can use the file.choose() function.
+
+```{r}
+## Here is some of my unpublished data -- if you publish it, please include me as an author!
+## but seriously, please don't share.
+# flowerFile <- file.choose() 
+
+flowerFile <- "/Users/callinswitzer/Dropbox/Harvard/RByCall/RClassMaterials/Session2/DataSets/CallinPollen.csv"
+
+flr <- read.csv(flowerFile)
+flr[ 1:5 , 1:4] # shows the first 5 rows, first 4 columns
+```
+
+---
+
+# New Material
+
+## 1. Set and get your working directory
+Session -> Set Working Directory -> Choose Directory
+
+```{r}
+# gets your working directory
+getwd()
+
+# sets your working directory
+setwd("/Users/callinswitzer/Dropbox/Harvard/rbycall/RClassMaterials/Session2")
+```
+####  Handy functions
+
+* dir() # prints stuff in your working directory
+
+* file.show() # allows you to open files 
+
+## Importing data into R
+You can click "Import Dataset", or write the code yourself
+
+```{r}
+# read.table is another (possibly more flexible) way to read in data
+
+# get names of files in datasets folder
+dir("datasets")
+
+# view the file
+file.show("datasets/mtcars.txt")
+
+# read in space-separated file
+crs <- read.table("datasets/mtcars.txt", sep = " ")
+head(crs)
+```
+
+
+```{r}
+## you can also import directly from a web URL
+# this is a dataset about rats from crawley book
+URL <- "http://nature.berkeley.edu/~casterln/crawley/rats.txt"
+rats <- read.csv(URL)
+head(rats) # not quite right
+
+rats <- read.csv(URL, sep = "\t")
+head(rats)
+```
+
+
+---
+
+# Exercises(1): 
+
+
+### 1.1. Figure out what type of separator is used in the "mtcars.txt" dataset, using the file.show() function.
+
+
+### 1.2. Import the dataset, "mtcars.txt", using either the read.csv() function or the read.table() function.  Call the dataset, "crs".
+
+### 1.3. Look at the first few rows of the dataset, "crs", to make sure you read it in correctly.
+
+### 1.4 *Advanced* Read in spray.txt dataset. Try to make it look like the spray-easy.txt dataset.
+
+
+---
+
+
+## 2. Navigate your data, using “square bracket” notation and “$” notation.
+```{r}
+# read in data (again)
+flr <- read.csv("datasets/CallinPollen.csv")
+
+summary(flr)
+
+fr.df <- flr["frameRate"] # this returns a data frame, which we often don't want
+head(fr.df)
+class(fr.df)
+
+fr.vec <- flr[["frameRate"]] # this gives a vector
+fr.vec2 <- flr$frameRate # gives a vector
+head(fr.vec)
+head(fr.vec2)
+class(fr.vec)
+
+# if you want a new data frame with a subset of columns
+smDF <- flr[c("frameRate", "flowerNum")]
+head(smDF)
+
+# another possible way
+smDF <- flr[, c("frameRate", "flowerNum")] # [rows, columns]
+head(smDF)
+
+# another way
+smDF <- flr[, c(19,1)] # getting all rows, columns 19 and 1
+head(smDF)
+```
+
+
+---
+
+# Exercises(2): 
+
+
+### 2.1. Read in the dataset, "toothGrowth.txt"; call it "tooth". Use read.table(..., header = TRUE)
+
+
+### 2.2. Make a new dataframe, with only the columns "len", and "supp" from the tooth dataframe. Call the new dataframe, "tooth.sm". Print the first few rows of the data frame to check your work.
+
+
+### 2.3. Make a new vector, called "dose.vec" that contains the "dose" column from the tooth dataset. Print the first few items in the vector to check your work.
+
+---
+
+## 3. Quickly visualize your data (using car::scatterplotMatrix() and plot())
+
+#### plot()
+```{r}
+# we can use the base plot() function
+?plot # gets help about the plot function
+# we're using the flr dataset
+
+# different ways to plot
+par(mfrow = c(2,2)) # tells R to put  2 X 2 plots per panel
+plot(x = flr$humidity, y=flr$temp)
+plot(temp~humidity, data = flr)
+with(flr, plot(y = temp, x = humidity))
+with(flr, plot(y = temp, x = humidity, 
+               main = "Temp and Humidity", # title
+               ylab = expression(paste("Temperature (",degree,"C)")), # y label
+               xlab = "Rel. Humidity (%)" , # x label
+               bty = "l", # type of box around the plot
+               pch = 20, # what symbol to plot: "point change"?
+               col = rgb(0,0.5,1, 0.5), # color of the poings, and transparency
+               cex = 2, # size of points
+               tck = .03, # length of ticks 
+               las = 1, # axis label direction
+               ylim = c(10, 40), # y limits
+               xlim = c(20, 100) # x limits
+               )) 
+
+par(mfrow = c(1,1)) # reset the plots per panel
+
+# ?par will show you all of the parameters you can adjust
+# can also use dev.off() to clear the plotting device
+```
+
+#### hist() and rug()
+
+```{r}
+# histograms help us look at distributions and check for outliers
+hist(flr$humidity, breaks = 15)
+rug(jitter(flr$humidity)) # jitter() helps you see overlapping points
+
+hist(flr$slope); rug(flr$slope)
+
+# a look ahead
+histRug <- function(vec, ...){
+     hist(vec, ...)
+     rug(vec)
+}
+
+histRug(flr$int, breaks = 15, xlab = "int", main = NULL)
+```
+
+#### Scatterplot matrix
+```{r}
+# look at scatterplot matrix of numeric data to view "marginal relationships"
+colnames(flr) # figure out which columns I want
+#install.packages("car")
+car::scatterplotMatrix(flr[c("humidity", "temp", "slope", "int")])
+
+# change the paramters for the scatterplots
+car::scatterplotMatrix(flr[c("humidity", "temp", "slope", "int")], 
+                       pch = 20, 
+                       col = c("blue", "red", rgb(.8,0.4, .3, 0.2)))
+# Another way:
+# library(car)
+# scatterplotMatrix(flr[c("humidity", "temp", "slope", "int")])
+
+```
+
+---
+
+# Exercises(3): 
+
+
+
+### 3.1. Read in the "arrests.txt" data frame.  Call it "arrests".  Make a histogram of the "UrbanPop" column.  Draw a rug underneath the histogram
+
+### 3.2. Draw a scatterplotMatrix of the arrests dataset.
+
+
+### 3.3. Read in the "mtcars.txt" file; call it crs (if you haven't already). Plot y = mpg, x = wt. 
+
+### 3.4. *Advanced* Figure out how to make a boxplot of y = mpg, x = cyl. Hint: make cyl into a factor, or use the boxplot() function.
+
+### 3.5. *Advanced* Figure out how to color the poins in the scatterplot (y = mpg, x = cyl) by their number of cylinders.  Also, change the points into triangles (hint: ?pch)
+
+### 3.6. *Advanced* Figure out how to add a legend to your plot.
+
+---
+
+## 4. Manipulate your data (sub setting with logical statements, cleaning data, making calculations with a data frame)
+#### List of logical operators
+* "==" equals
+* "!=" not equal
+* "&" and
+* "|" or
+* ">" greather
+* "<" less
+* ">=" greather or equal
+* "<=" less or equal
+
+```{r}
+# select rows, all columns
+FewRows <- flr[10:20, ]
+FewRows
+
+# use logical statements to return logical vectors
+amb <- flr$trt == "Ambient" # returns a logical vector that is TRUE when flr$trt is ambient
+head(amb)
+summary(amb)
+
+# Use "&" to refine
+ambHighHum <- flr$trt == "Ambient" & flr$humidity > 50
+summary(ambHighHum)
+
+# Note: can't use x == NA; us is.na() instead
+head(flr$openTime == NA) # doesn't work
+naOpen <- is.na(flr$openTime)
+naOpen
+```
+
+#### we can use logical statements to subset dataframes and clean data
+Use square bracket notation
+
+```{r}
+# select rows where daysOpen == 1, all columns
+d1 <- flr[flr$daysOpen == 1, ]
+summary(d1)
+
+# select rows where daysOpen does not = 1, and distance == 1
+d1d1 <- flr[flr$daysOpen != 1 & flr$distance == 1, ]
+head(d1d1)
+
+
+# cleaning data
+hist(flr$slope); rug(flr$slope)
+
+# say we want to drop the points where slope > 0.12
+sub1 <- flr[flr$slope < 0.12, ]
+hist(sub1$slope); rug(sub1$slope)
+
+```
+
+#### Calculations within data frames
+And tabulating some data from the data frames
+
+```{r}
+# say we want to calculate a new measurement that is a combination of slope + int
+flr$NewStat <- flr$slope + flr$int
+head(flr$NewStat)
+
+# or this will work
+flr$NewStat1 <- with(flr, slope + int)
+head(flr$NewStat1)
+
+# say we want to change one of the variable types in our data frame
+class(flr$daysOpen)
+flr$daysOpen <- as.factor(flr$daysOpen)
+class(flr$daysOpen)
+# or this will work
+class(flr$flowerNum)
+flr <- within(flr, flowerNum <- as.factor(flowerNum))
+class(flr$flowerNum)
+
+
+# calculate averages by individual
+# say we want average glycogen for each individual
+# URL <- "http://nature.berkeley.edu/~casterln/crawley/rats.txt"
+# rats <- read.csv(URL)
+# rats <- read.csv(URL, sep = "\t")
+summary(rats) 
+tapply(X = rats$Glycogen, FUN = mean, INDEX = rats$Rat)
+
+# calcuate mean by treatment and individual
+tapply(X = c(rats$Glycogen), FUN = mean, INDEX = interaction(rats$Rat, rats$Treatment))
+
+
+tab1 <- tapply(X = flr$slope, INDEX = flr$trt, FUN = mean)
+class(tab1)
+mode(tab1)
+
+# tabulate your data (get counts)
+xt1 <- xtabs(formula = ~trt, data = flr)
+xt1
+
+# convert to data frame for easy saving
+tab1 <- as.data.frame(tab1)
+```
+
+---
+
+# Exercises(4): 
+
+
+###4.1 Read in the "loblolly.txt" data. Call it "lob".
+
+### 4.2 Make a new smaller dataframe, called lob.sm, where "Seed" is not "311", and where "height" is greater than 5.  Plot a histogram of "height" to prove that there are none less than 5 (feel free to add a rug). 
+     * check to see if 311 is in your new dataframe with this command: "311 %in% lob.sm$Seed"
+
+
+### 4.3 Read in the "yarn.txt" file; call it yarn. Make two separate histograms -- one for the breaks in wool A and one for the breaks in wool B.  
+     * Advanced plot the histograms side-by-side on one panel, and make sure the x-axis limits are the same for each.  
+
+### 4.4 *Advanced* Calculate the mean, median, and range for "breaks" for each type of wool in the dataset.
+
+---
+
+## 5. Export data
+```{r}
+# Write text files
+# can also use write.csv()
+write.table(x = tab1, file = "Tab1.csv", sep = ",",  col.names = FALSE)
+
+# saving plots
+pdf(file = "plot1.pdf", width = 5, height = 4) # open graphics device
+# can also use postscript()
+plot(x = flr$humidity, y=flr$temp) # make your plot
+dev.off() # close the graphics device
+
+# or just export with the "Export" button 
+```
+
+---
+
+# Exercises(5): 
+
+
+### 5.1 Read int the CallinPollen.txt file (if you haven't already), and call it flr. Plot x = humidity, y = int.  Export this plot to a file called "humInt.pdf".  Make the width = 4 and height = 3.
+
+### 5.2 *Advanced* Make that plot look nicer! Change the points to solid dots.  Remove the box around the plot.  Give it a nice title and rename the axes.  Save it with width = 5, height = 4 as "fancyHumInt.pdf". Note: "int"" is a measurement of pollen released from a flower.
+
+### 5.3 Subset the flr dataset to contain only rows where "distance" > 9 & the "distance" variable is not an "NA" (hint: use !is.na()). Call the new data frame flr.dist.  Export this small data frame as "flrDist.csv".
+
+---
+
+
+## 6 - 7 Install new libraries and using functions
+use install.packages("..."), but you only ned to use this the first time you use the library.  After that, you can just use library("...")
+```{r}
+# we def. want ggplot2
+# install.packages("ggplot2") # do this only the first time you use a library
+library(ggplot2) # now, this package is ready to use
+# you can use any function from this library now, without using the :: notation
+# help(package = "ggplot2") # gets help for this new package or library
+# note: I use package/library interchangeably -- there's probably a difference, but I don't know it.
+
+# let's try it
+ggplot(flr, aes(x= humidity, y = int)) + 
+     geom_point(alpha = 0.8, size = 4, position = position_jitter(width = 0.5, height = 0)) +
+     theme_bw() + 
+     theme(    panel.grid.major = element_blank(), 
+               panel.grid.minor = element_blank(), 
+               panel.border = element_blank(),
+               panel.background = element_blank(), 
+               axis.line = element_line(colour = "black")) + 
+     labs(x = "Relative Humidity", y = "Pollen Release (Integration method)", 
+          title = 'Pollen release vs. Humidity') + 
+     geom_smooth(method = "lm", se = FALSE) # add a line without standard error
+```
+
+---
+
+# Exercises(6): 
+
+
+### 6.1 Install and load the package, "plyr".  Run the following code to see if it worked:
+ddply(flr, "shakeNumber", summarise, mean.Int = mean(int))
+You should get this:
+
+  shakeNumber   mean.Int
+1           1 0.11814448
+2           2 0.08530651
+3           7 0.02955185
+4           8 0.03822761
+
+
+
+---
+
+### Extra Exercises:
+### 6.2 Install the package, "ggmap"
+
+### 6.3 Use the get_map() function and the argument, location = c( lon = -71.114573, lat = 42.379036), to get a map, centered on HUH (hint: get_map(location = c( lon = -71.114573, lat = 42.379036), zoom = 19, maptype = "satellite"))
+
+### 6.4 plot a map of using ggmap()
+
+---
+
+## Formatting data for visualization
+
+```{r}
+df1 <- data.frame(person = c("bob", "sue", "jack", "ann"), number1 = c(4,5,6,1), number2 = c(2,4,6,6))
+df1
+
+# we want to plot persons' number1 and number2, but we'd need them to be in the same column
+# wrong
+ggplot(df1) + 
+     geom_point(aes(x = person, y = number1), color = "red") + 
+     geom_point(aes(x = person, y = number2), color = "blue")
+
+# you can reformat
+library(reshape2)
+df.melt <- melt(df1, id.vars = "person")
+
+ggplot(df.melt, aes(x = person, y = value)) +
+     geom_point(aes(color = variable))
+
+
+## formatting for barcharts
+ggplot(df1, aes(x = person, y = number1)) + 
+     geom_bar(stat = "identity")
+
+
+
+
+## or reshape the data frame
+df.long <- data.frame(person = unlist(sapply(df1$person, 
+                                             FUN = function(x) 
+                                                  rep(x, times = df1[x, "number1"]))))
+
+ggplot(df.long, aes(x = person)) + 
+     geom_bar( fill = "red", alpha = 0.6)
+
+
+```
+
+
+## Loops
+```{r}
+# for loops repeat a specific number of times
+for(i in 1:10){
+     print(i + 100)
+}
+
+for(ii in df1$person){
+    print(rep(ii, times = df1[df1$person == ii, "number1"]))
+}
+
+
+## while loops repeat until something happens
+x <- 1
+while(x < 10){
+     print(x + 100) 
+     x <- x + 1
+}
+
+## Apply functions are often faster than loops
+
+# for loop
+system.time({
+
+     newVec <- numeric()
+     for(ii in 1:50000){
+          newVec[ii] <- ii + 100
+     }
+})
+head(newVec)
+
+
+## sapply function
+system.time({
+     newVec.sa <- sapply(1:100000, FUN = function(x) x + 100)
+})
+
+## you can speed up a for-loop by pre-allocating space
+system.time({
+
+     newVec <- numeric(100000)
+     for(ii in 1:100000){
+          newVec[ii] <- ii + 100
+     }
+})
+
+
+```
+

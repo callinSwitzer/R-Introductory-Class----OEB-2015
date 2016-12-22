@@ -1,0 +1,450 @@
+#' ---	
+#' title: "Session 5"	
+#' author: "Callin Switzer"	
+#' date: "Oct 15, 2015"	
+#' output: html_document	
+#' ---	
+#' *Note: this is the final class. Feel free to contact me for help with R or statistics. cswitzer@fas.harvard.edu*	
+#' 	
+#' I can help with these things: 	
+#' 	
+#' 1. non-parametric analysis (permutation tests, rank-sum, bootstrap, etc). 	
+#' 2. interactive visualizations using ggvis package	
+#' 3. drawing maps in R	
+#' 4. generalized linear models (count data, logistic regression, skewed data)	
+#' 5. analyses for repeated measures (linear mixed effects models, generalized linear mixed effects models)	
+#' 6. What to do when the assumptions of your test are not met (robust regression, transformations, etc.)	
+#' 7. Correcting p-values for multiple comparisons.	
+#' 8. Model selection methods (stepwise procedures, likelihood ratio tests, analysis of deviance)	
+#' 	
+#' I can't help very much with these things: 	
+#' 	
+#' 1. Phylogenetic analyses	
+#' 2. Bioninformatics	
+#' 	
+#' 	
+#' ---	
+#' 	
+#' #### Topics:	
+#' 	
+#' * Loops and apply functions()	
+#' * Writing your own functions	
+#' 	
+#' 	
+#' 	
+# print system time, so we know when the last update was	
+paste("Last knit to html at: ", Sys.time())	
+#' 	
+#' 	
+#' ---	
+#' 	
+#' # Review	
+#' #### What we learned last time:	
+#' 1. Visualization with ggplot	
+#' * adding lines	
+#' * changing order or bars / boxes	
+#' * changing color scheme	
+#' 	
+#' ---	
+#' 	
+#' <span style="color:red; font-family:Georgia; font-size:2em;">	
+#' Exercises(0): 	
+#' </span>	
+#' 	
+#' ### 0.1 Set your working directory to the Session5 folder.	
+#' 	
+#' 	
+#' ---	
+#' 	
+#' 	
+# 0.1	
+setwd("/Users/callinswitzer/Dropbox/Harvard/RByCall/RClassMaterials/Session5")	
+	
+#' 	
+#' 	
+#' 	
+#' # Loops and apply functions	
+#' 	
+#' 	
+################################  EXAMPLE 1 ################################	
+# for and while loops	
+################################  EXAMPLE 1 ################################	
+# for loops repeat a specific number of times	
+for(i in 1:10){	
+     print(i + 100)	
+}	
+	
+# make fake data	
+df1 <- data.frame(person = c("bob", "sue", "jack", "ann"), number1 = c(4,5,6,1), number2 = c(2,4,6,6))	
+df1	
+	
+# another for loop	
+for(ii in df1$person){	
+    print(rep(ii, times = df1[df1$person == ii, "number1"]))	
+}	
+	
+# load the cars dataset that is already in R	
+data(mtcars)	
+crs <- mtcars	
+# a for loop to make lots of plots	
+for(foo in c("wt", "hp", "mpg", "qsec", "disp")){	
+     hist(crs[ , foo], main = NULL, xlab = foo)	
+     rug(crs[ ,foo])	
+}	
+	
+## while loops repeat until something happens	
+x <- 1	
+while(x < 10){	
+     print(x + 100) 	
+     x <- x + 1	
+}	
+	
+#' 	
+#' 	
+#' ---	
+#' 	
+#' <span style="color:red; font-family:Georgia; font-size:2em;">	
+#' Exercises(2): 	
+#' </span>	
+#' 	
+#' ### 2.1 Write a for loop to print the numbers 1:100	
+#' 	
+#' ---	
+#' 	
+#' 	
+	
+################################  EXAMPLE 2 ################################	
+# if/else	
+################################  EXAMPLE 2 ################################	
+	
+# you can use "if", "else", and "else if" inside loops to do different things	
+	
+for(i in 1:10){	
+     if(i > 5) print(i + 100)	
+     else print("hello")	
+}	
+	
+# same	
+for(i in 1:10){	
+     if(i > 5){	
+         print(i + 100) 	
+     } 	
+     else{	
+          print("hello")	
+     } 	
+}	
+	
+	
+# example with data frame	
+for(nums in 1:length(df1$number1)){	
+     print(nums)	
+}	
+	
+	
+for(nums in 1:length(df1$number1)){	
+     print(as.character(df1$person[nums]))	
+}	
+	
+for(nums in 1:length(df1$number1)){	
+     if(as.character(df1$person[nums]) == "sue"){	
+          print("sue was here")	
+     }	
+     else if(as.character(df1$person[nums]) == "bob"){	
+          print("bob was here")	
+     }	
+     else print("ann or jack")	
+}	
+	
+# example of making a new vector	
+vec1 <- rep(NA, nrow(df1))	
+for(nums in 1:length(df1$number1)){	
+     if(as.character(df1$person[nums]) == "sue"){	
+          vec1[nums] <- ("sue was here")	
+     }	
+     else if(as.character(df1$person[nums]) == "bob"){	
+          vec1[nums] <- ("bob was here")	
+     }	
+     else vec1[nums] <- ("ann or jack")	
+}	
+	
+vec1	
+	
+#' 	
+#' 	
+#' ---	
+#' 	
+#' <span style="color:red; font-family:Georgia; font-size:2em;">	
+#' Exercises(2, cont'): 	
+#' </span>	
+#' 	
+#' ### 2.2 Write one for loop for the numbers 1:100.  	
+#' * If the number is > 25, print "low"	
+#' * If the number is >= 25 and <= 75, print "middle"	
+#' * If the number is > 75, print "High"	
+#' 	
+#' 	
+#' ### Extra Practice	
+#' ### Write a for loop that cycles through the columns of the mtcars.txt dataset (called "crs", earlier), and makes a histogram, only if the column is numeric.	
+#' To check if a variable is numeric, use "is.numeric(...)"	
+#' 	
+#' ---	
+#' 	
+#' ## Apply functions	
+#' 	
+#' 	
+	
+################################  EXAMPLE 2 ################################	
+# apply functions	
+################################  EXAMPLE 2 ################################	
+	
+# here's a simple function	
+x2 <- function(x) x^2	
+	
+x2(5)	
+	
+# here is a function	
+trimMean <- function(vect) {	
+     qs <- quantile(vect, probs = c(.10, .90))	
+     mean(vect[vect > qs[1] & vect < qs[2]])	
+}	
+	
+nums <- c(1:100, 1000)	
+nums2 <- c(50:100, 1500, 1)	
+nums3 <- c(1,3,5,6,7,7,5,4,34,.76,87,8,8,8,6,5,4.4,4,56,7,7,88,33)	
+	
+# make a new list, from our numbers	
+listNums <- list(nums, nums2, nums3)	
+	
+trimMean(nums)	
+trimMean(nums2)	
+trimMean(nums3)	
+	
+# trimMean(listNums) doesn't work	
+# trimMean(nums, nums2) #doesn't work	
+trimMean(c(nums, nums2, nums3)) # doesn't give three different numbers	
+	
+# we could write a for loop	
+listMNS <- numeric(length(listNums))	
+for(i in 1:length(listNums)){	
+     listMNS[i] <- trimMean(listNums[[i]])	
+}	
+listMNS	
+	
+# or we could use apply	
+sapply(listNums, FUN = trimMean)	
+	
+	
+## Apply functions are often faster than loops	
+	
+# this for loop is slow, because we grow the newVec variable on every iteration of the loop	
+# note: loop isn't needed here, you could just use 1:30000 + 100 to get a new vector.	
+system.time({	
+     newVec <- numeric()	
+     for(ii in 1:30000){	
+          newVec[ii] <- ii + 100	
+     }	
+})	
+head(newVec)	
+	
+	
+## sapply function (for illustration only....sapply is not necessary here)	
+# first, we write a function for what we want to happen	
+x100 <- function(x) x + 100	
+	
+	
+# apply that function to a vector	
+system.time({	
+     newVec.sa <- sapply(X = 1:100000, FUN = x100)	
+})	
+	
+head(newVec.sa)	
+	
+	
+	
+	
+## you can speed up a for-loop by pre-allocating space	
+system.time({	
+	
+     newVec <- numeric(100000)	
+     for(ii in 1:100000){	
+          newVec[ii] <- ii + 100	
+     }	
+})	
+	
+	
+## you can use apply functions on a data frame	
+	
+# say you want to calculate the trimmed mean (removing the max and min) for several columns in your data frame	
+	
+# this function trims the min and max of a vector and returns the mean	
+tMean <- function(x){	
+     x <- x[x != min(x, na.rm = TRUE) & x != max(x, na.rm = TRUE)]	
+     return(mean(x, na.rm=TRUE))	
+}	
+	
+tMean(c(1:100, 10000, NA, NA))	
+mean(c(1:100, 10000, NA), na.rm =TRUE)	
+	
+	
+flr <- read.csv("Datasets/CallinPollen.csv")	
+	
+# you could use a for loop	
+tms <- numeric()	
+for(ii in c("temp", "humidity", "int", "slope")){	
+     tms[ii] <- tMean(flr[, ii])	
+}	
+	
+tms	
+	
+# or you could use apply	
+# apply allows you to choose the margin -- I think it converts to a matrix first	
+apply(X = flr[, c("temp", "humidity", "int", "slope")], MARGIN = 2, FUN = tMean)	
+	
+# same thing	
+sapply(X = flr[, c("temp", "humidity", "int", "slope")], FUN = tMean)	
+	
+#' 	
+#' 	
+#' ---	
+#' 	
+#' <span style="color:red; font-family:Georgia; font-size:2em;">	
+#' Exercises(2, cont'): 	
+#' </span>	
+#' 	
+#' ### 2.3 The following function prints the max or the highest level of a factor.	
+#' 	
+#' 	
+maxHighF <- function(thing) {	
+     if(is.numeric(thing)) return(max(thing, na.rm = TRUE))	
+     else if(is.factor(thing)) return(levels(thing)[length(levels(thing))])	
+     else return(NA)	
+}	
+	
+	
+maxHighF(crs$hp) # works	
+maxHighF(flr$trt) # works	
+	
+maxHighF(flr[, c("trt", "humidity")]) # doesn't work	
+	
+#' 	
+#' 	
+#' 	
+#' ### Apply this function to every column of the flower data frame, using sapply or lapply	
+#' Note: This won't work with just "apply"	
+#' 	
+#' ---	
+#' 	
+#' 	
+#' ## Writing your own functions	
+#' 	
+#' 	
+# functions take in something, do something, then output something	
+	
+# example 1	
+printNum.plus5 <- function(num){	
+     print(num + 5)	
+}	
+	
+	
+printNum.plus5(5)	
+printNum.plus5(1000)	
+	
+	
+# example 2	
+plotWithAxisLabels <- function(x1, y1){	
+     plot(x = x1, y = y1, xlab = "Here is x1", ylab = "Here is y1", 	
+          bty = "l", pch = 20)	
+}	
+	
+plotWithAxisLabels(x1 = flr$distance, y1 = flr$slope)	
+	
+	
+####### Functions to show Bonferroni Correction #######	
+	
+# this function gets 20 random samples, and conducts one-sample t-tests on each of the samples	
+# it returns the number of p-values that are less than 0.05	
+pvTst <- function(){	
+     # get normally distributed samples, with mean = 0, and sd = 1	
+     samps  <- lapply(1:20 , function(o) rnorm(100))	
+	
+     # get p-values from t-test	
+     pvs <- sapply(1:length(samps), function(x) t.test(samps[[x]])$p.value)	
+     	
+     # returns the number of p-values that are significant	
+     sum(pvs < 0.05)	
+}	
+	
+# test the function	
+pvTst()	
+	
+# imagine 1000 studies, each doing 20 tests on random, normal data	
+Sigs <- replicate(1000, pvTst())	
+	
+barplot(table(Sigs), main = "Number of erroneously significant p-values", col = (as.numeric(names(table(Sigs))) > 0) + 1)	
+	
+mean(Sigs > 0)  # probability of erroneously rejecting at least one test	
+	
+pvBonf <- function(){	
+     # sample random data	
+     samps  <- lapply(1:20 , function(o) rnorm(20))	
+     	
+     # get p-values for one-sample t.test	
+     pvs <- sapply(1:length(samps), function(x) t.test(samps[[x]])$p.value)	
+     	
+     # these p-values have been adjusted with the Bonferroni correction	
+     pvs.bonf <- p.adjust(pvs, method = "bonferroni")	
+     	
+     # returns the number of p-values that are significant	
+     sum(pvs.bonf < 0.05)	
+     	
+}	
+	
+sigs.Bonf <- replicate(1000, pvBonf())	
+barplot(table(sigs.Bonf),main = "Number of erroneously significant p-values", col = (as.numeric(names(table(sigs.Bonf))) > 0) + 1)	
+	
+mean(sigs.Bonf > 0) # probability of erroneously rejecting at least one test	
+	
+# main take-away: if 1000 studies had done 20 different tests on random, nonsignificant data, then	
+# using Bonferrroni adjustment would ensure that ~5% of those studies erroneously rejected at least one	
+# test	
+	
+#' 	
+#' 	
+#' ---	
+#' 	
+#' <span style="color:red; font-family:Georgia; font-size:2em;">	
+#' Exercises(3): 	
+#' </span>	
+#' 	
+#' ### 3.1 Write a function that takes a column name from the flr dataframe as an argument.  If the column is numeric, make a scatterplot of x = that column, y = int, with points colored red.  If the column is a factor, then make a boxplot of x = column, y = int, where the boxes are filled with blue. 	
+#' 	
+#' #### Test the function with the "trt" and "temp" columns	
+#' 	
+#' You can read in the dataset like this:	
+#'           	
+#'      flr <- read.csv("Datasets/CallinPollen.csv")	
+#'      	
+#' ---	
+#' 	
+#' <span style="color:red; font-family:Georgia; font-size:2em;">	
+#' Extra Practice: 	
+#' </span>	
+#' 	
+#' ### E.1 Read in the "loblolly.txt" dataset, if you haven't already.  Call it "lob". Use ggplot() to plot a scatterplot (geom_point()) with x= age, y = height.	
+#' 	
+#' 	
+#' ### E.2 Using the "lob" dataframe, convert "age" to a factor. 	
+#'      	
+#'      lob$age <- as.factor(lob$age)	
+#' 	
+#' ### Now make a boxplot where x = age, and y = height with ggplot()	
+#' 	
+#' 	
+#' 	
+#' ### E.3 Using the "lob" dataframe, add points to the boxplot from above. *Advanced change the color of the points, based on the "Seed" variable from the "lob" dataframe (you may want to convert it to a factor first)*	
+#' 	
+#' 	
+#' 	
+#' ### E.4 Change the theme from your previous plot to the "classic" theme with theme_classic().	
+#' 	
+#' 	
