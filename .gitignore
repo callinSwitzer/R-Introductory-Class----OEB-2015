@@ -6,6 +6,9 @@
 *.png
 
 
+# keynote
+*.key
+
 # History files
 .Rhistory
 .Rapp.history
